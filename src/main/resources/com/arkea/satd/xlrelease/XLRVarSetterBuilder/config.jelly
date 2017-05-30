@@ -1,0 +1,25 @@
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+  <!--
+    This jelly script is used for per-project configuration.
+
+    See global.jelly for a general discussion about jelly script.
+  -->
+
+  <f:entry title="XL-Release Id" field="XLR_releaseId">
+    <f:textbox />
+  </f:entry>
+  
+  <f:entry title="XL-Release Variable Name" field="XLR_varName">
+    <f:textbox />
+  </f:entry>
+  
+  <f:entry title="Jenkins Variable Name" field="JKS_varName">
+    <f:textbox />
+  </f:entry>
+  
+  <f:entry title="Debug mode" field="debug" description="verbose logs">
+   <f:checkbox/>
+  </f:entry>
+  
+</j:jelly>
