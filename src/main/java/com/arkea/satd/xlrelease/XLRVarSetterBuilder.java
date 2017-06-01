@@ -36,6 +36,7 @@ import hudson.EnvVars;
 import hudson.Extension;
 import hudson.FilePath;
 import hudson.Launcher;
+import hudson.ProxyConfiguration;
 import hudson.model.AbstractProject;
 import hudson.model.Run;
 import hudson.model.TaskListener;
@@ -67,6 +68,9 @@ public class XLRVarSetterBuilder extends Builder implements SimpleBuildStep {
     private final String XLR_varName;
     private final String JKS_varName;
     private boolean debug;
+    
+    private ProxyConfiguration proxyConfiguration;
+    private boolean hasProxy;
     
     // Fields in config.jelly must match the parameter names in the "DataBoundConstructor"
     @DataBoundConstructor
@@ -105,8 +109,7 @@ public class XLRVarSetterBuilder extends Builder implements SimpleBuildStep {
     public void perform(Run<?,?> build, FilePath workspace, Launcher launcher, TaskListener listener) throws IOException, InterruptedException {
 
 		// Get local variables
-		EnvVars envVars = new EnvVars();
-		envVars = build.getEnvironment(listener);
+		EnvVars envVars = build.getEnvironment(listener);
 		
 		// Get Global & Config Variables
 		String xlrReleaseId = envVars.get("XLR_releaseId");
@@ -267,14 +270,25 @@ public class XLRVarSetterBuilder extends Builder implements SimpleBuildStep {
             
         	// Creation et initialisation of the http test connection 
         	CloseableHttpClient httpclientTest = HttpClientBuilder.create().build();
-    		HttpHost xlrHost = new HttpHost(XLR_hostName,new Integer(XLR_hostPort));
+    		HttpHost xlrHost = new HttpHost(XLR_hostName,Integer.parseInt(XLR_hostPort));
     		
     		// test url (XL-Release global variables)
     		String testRequest = "/api/v1/config/Configuration/variables/global";
         	
-    		// Check if Jenkins Proxy settings
-    		boolean hasProxy = null != Jenkins.getInstance() && null != Jenkins.getInstance().proxy;
-            
+    		ProxyConfiguration proxyConfiguration;
+        	boolean hasProxy;
+        	
+        	Jenkins jenkins = Jenkins.getInstance();
+        	
+        	if (jenkins != null && jenkins.proxy != null) {
+        		proxyConfiguration =  jenkins.proxy;
+        		hasProxy = true;
+        	} else {
+        		// Define a proxy configuration to pass findbugs tests
+        		proxyConfiguration = new ProxyConfiguration("localhost", 3128);
+        		hasProxy = false;
+        	}
+        	
     		// Credentials and Context for XL-Release server
             CredentialsProvider targetProvider = new BasicCredentialsProvider();
     		
@@ -296,7 +310,7 @@ public class XLRVarSetterBuilder extends Builder implements SimpleBuildStep {
             
             if (hasProxy) {
             	
-                List<Pattern> noProxyHostPatterns = Jenkins.getInstance().proxy.getNoProxyHostPatterns();
+                List<Pattern> noProxyHostPatterns = proxyConfiguration.getNoProxyHostPatterns();
                  for (int i = 0; i < noProxyHostPatterns.size(); i++) {
                     Pattern noproxypattern = noProxyHostPatterns.get(i);
                     if (noproxypattern.matcher(xlrHost.getHostName()).matches()) {
@@ -315,17 +329,14 @@ public class XLRVarSetterBuilder extends Builder implements SimpleBuildStep {
                 HttpHost proxy;
                 
                 // Check if Jenkins Proxy need authentication
-                boolean proxyIsAuthentified = null != Jenkins.getInstance().proxy.getUserName();
-            	
-            	if (proxyIsAuthentified) {
-            		proxy = new HttpHost(Jenkins.getInstance().proxy.name, Jenkins.getInstance().proxy.port);
-            		// TODO - Add credentials for proxy
-            		// String proxyUserName = Jenkins.getInstance().proxy.getUserName();
-            		// String proxyPassword = Jenkins.getInstance().proxy.getPassword();
-            		// ...
-            	} else {
-            		proxy = new HttpHost(Jenkins.getInstance().proxy.name, Jenkins.getInstance().proxy.port);
-            	}
+//              boolean proxyIsAuthentified = null != proxyConfiguration.getUserName();
+
+                proxy = new HttpHost(proxyConfiguration.name, proxyConfiguration.port);
+//               	if (proxyIsAuthentified) {
+//            		// TODO - Add credentials for proxy
+//            		String proxyUserName = proxyConfiguration.getUserName();
+//            		String proxyPassword = proxyConfiguration.getPassword();
+//            	}
             	
             	// Set proxy settings to the config
             	RequestConfig config = RequestConfig.custom().setProxy(proxy).build();
@@ -418,10 +429,19 @@ public class XLRVarSetterBuilder extends Builder implements SimpleBuildStep {
     		JSONObject inputData,
     		PrintStream logger
     		) throws IOException {
-        
-    	// Check if Jenkins Proxy settings
-        boolean hasProxy = null != Jenkins.getInstance() && null != Jenkins.getInstance().proxy;
-        
+    	
+    	Jenkins jenkins = Jenkins.getInstance();
+    	if (null != jenkins) {
+    		if (null != jenkins.proxy) {
+    			proxyConfiguration =  jenkins.proxy;
+    			hasProxy = true;
+    		}
+    	} else {
+    		// Define a proxy configuration to pass findbugs tests
+    		proxyConfiguration = new ProxyConfiguration("localhost", 3128);
+    		hasProxy = false;
+    	}
+    	
         if (isDebug()) {
         	logger.println("[XLRVarSetter] - Jenkins Proxy Settings : " + hasProxy);
         }
@@ -448,7 +468,7 @@ public class XLRVarSetterBuilder extends Builder implements SimpleBuildStep {
         
         if (hasProxy) {
         	
-            List<Pattern> noProxyHostPatterns = Jenkins.getInstance().proxy.getNoProxyHostPatterns();
+            List<Pattern> noProxyHostPatterns = proxyConfiguration.getNoProxyHostPatterns();
              for (int i = 0; i < noProxyHostPatterns.size(); i++) {
                 Pattern noproxypattern = noProxyHostPatterns.get(i);
                 if (noproxypattern.matcher(targetHost.getHostName()).matches()) {
@@ -466,30 +486,30 @@ public class XLRVarSetterBuilder extends Builder implements SimpleBuildStep {
                 useProxy ) {
 
         	if (isDebug()) {
-        		logger.println("[XLRVarSetter] - Jenkins Proxy name = " + Jenkins.getInstance().proxy.name);
-        		logger.println("[XLRVarSetter] - Jenkins Proxy port = " + Jenkins.getInstance().proxy.port);
+        		logger.println("[XLRVarSetter] - Jenkins Proxy name = " + proxyConfiguration.name);
+        		logger.println("[XLRVarSetter] - Jenkins Proxy port = " + proxyConfiguration.port);
         	}
             
             HttpHost proxy;
             
             // Check if Jenkins Proxy need authentication
-            boolean proxyIsAuthentified = null != Jenkins.getInstance().proxy.getUserName();
+            boolean proxyIsAuthentified = null != proxyConfiguration.getUserName();
         	
         	if (proxyIsAuthentified) {
         		// TODO - Add credentials for proxy
-        		// String proxyUserName = Jenkins.getInstance().proxy.getUserName();
-        		// String proxyPassword = Jenkins.getInstance().proxy.getPassword();
+        		// String proxyUserName = proxyConfiguration.getUserName();
+        		// String proxyPassword = proxyConfiguration.getPassword();
         		// ...
         		if (isDebug()) {
         			logger.println("[XLRVarSetter] - Jenkins Proxy need Auth (Not implemented yet)");
         		}
-        		proxy = new HttpHost(Jenkins.getInstance().proxy.name, Jenkins.getInstance().proxy.port);
+        		proxy = new HttpHost(proxyConfiguration.name, proxyConfiguration.port);
         		
         	} else {
         		if (isDebug()) {
         			logger.println("[XLRVarSetter] - Jenkins Proxy doesn't need Auth");
         		}
-        		proxy = new HttpHost(Jenkins.getInstance().proxy.name, Jenkins.getInstance().proxy.port);
+        		proxy = new HttpHost(proxyConfiguration.name, proxyConfiguration.port);
         		
         	}
                 
