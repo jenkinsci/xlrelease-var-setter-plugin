@@ -10,7 +10,7 @@
   </parent>
   <groupId>com.arkea.satd</groupId>
   <artifactId>xlrelease-var-setter</artifactId>
-  <version>0.2</version>
+  <version>0.2-SNAPSHOT</version>
   <packaging>hpi</packaging>
 
   <properties>
@@ -47,10 +47,10 @@
   <!--   -->
   <!-- Assuming you want to host on @jenkinsci: -->
   <scm>
-    <connection>scm:git:git://github.com/jenkinsci/${project.artifactId}-plugin.git</connection>
-    <developerConnection>scm:git:git@github.com:jenkinsci/${project.artifactId}-plugin.git</developerConnection>
+    <connection>scm:git:git://ssh.github.com/jenkinsci/${project.artifactId}-plugin.git</connection>
+    <developerConnection>scm:git:git@ssh.github.com:jenkinsci/${project.artifactId}-plugin.git</developerConnection>
     <url>https://github.com/jenkinsci/${project.artifactId}-plugin</url>
-    <tag>xlrelease-var-setter-0.2</tag>
+    <tag>xlrelease-var-setter-release</tag>
   </scm>
   <repositories>
     <repository>
