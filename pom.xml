@@ -25,7 +25,7 @@
 
   <name>XLRelease Variables Setter</name>
   <description>Add or update variables values into a running release</description>
-  <url>https://wiki.jenkins-ci.org/display/JENKINS/XLRelease+Variables+Setter</url>
+  <url>https://wiki.jenkins-ci.org/display/JENKINS/XLRelease+Variables+Setter+Plugin</url>
 
   <!-- The default licence for Jenkins OSS Plugins is MIT. Substitute for the applicable one if needed. -->
 
