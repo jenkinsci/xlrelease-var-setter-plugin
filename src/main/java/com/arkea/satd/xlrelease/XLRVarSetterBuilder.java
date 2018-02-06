@@ -543,6 +543,43 @@ public class XLRVarSetterBuilder extends Builder implements SimpleBuildStep {
         	}
   
         }
+	    
+	// Small update for those who have Proxy but not use it for XLR access
+	if ( hasProxy && !useProxy )
+	{                         
+            // Set proxy settings to the config
+        	RequestConfig config = RequestConfig.custom()
+  						.setConnectTimeout(10 * 1000)
+  						.setConnectionRequestTimeout(10 * 1000)
+  						.setSocketTimeout(10 * 1000).build();
+        	
+        	if ("GET".equals(targetMethod)) {
+        	
+        		// Add the config to the request
+        		HttpGet request = new HttpGet("http://" + targetHost.getHostName() + ":" + targetHost.getPort() + targetRequest);
+        		request.setConfig(config);
+        		
+        		// Execute the request and create the response
+            	response = httpclient.execute(request, context);
+        	}
+        	
+        	if ("PUT".equals(targetMethod)) {
+        		// Add the config to the request
+        		HttpPut request = new HttpPut("http://" + targetHost.getHostName() + ":" + targetHost.getPort() + targetRequest);
+        		request.setConfig(config);
+        		
+        		// Add the Json Object as data to the request
+        		StringEntity requestEntity = new StringEntity(
+        				inputData.toString(),
+        			    ContentType.APPLICATION_JSON);
+        		request.setEntity(requestEntity);
+        		
+        		// Execute the request and create the response
+            	response = httpclient.execute(request, context);
+        		
+        	}
+  
+	}
         
         return response;
     }
